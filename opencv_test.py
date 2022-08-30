@@ -2,13 +2,12 @@
 #https://thedatafrog.com/en/articles/human-detection-video/
 # check https://github.com/kkroening/ffmpeg-python
 # video codecs list https://gist.github.com/takuma7/44f9ecb028ff00e2132e
-
+# image on webbroser  https://pyimagesearch.com/2019/09/02/opencv-stream-video-to-web-browser-html-page/
 
 import cv2
 import numpy as np
 from datetime import datetime
-#import PyQt5
-#from matplotlib import pyplot as pl
+
 
 def log(datatolog):  # log del servidor
     file = open("LogCamera.txt", "a")
