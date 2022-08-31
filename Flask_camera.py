@@ -13,7 +13,7 @@ from flask import render_template
 import threading
 import imutils
 import argparse
-import time
+
 
 outputFrame = None
 lock = threading.Lock()  # thread safe, avoid a thread read a frame thats been use by another thread
@@ -21,8 +21,15 @@ lock = threading.Lock()  # thread safe, avoid a thread read a frame thats been u
 app = Flask(__name__)  #starts the flask object
 
 # only one can be active at the same time
-#vs = VideoStream(usePiCamera=1).start()   # use this one for Rpi camera module, only
-vs = VideoStream(src=0).start()      # use this for usb camera
+#vs = VideoStream(usePiCamera=1).start()   # Flask, use this one for Rpi camera module, only
+#vs = VideoStream(src=0).start()            # Flask, use this for internal or usb camera
+cap = cv2.VideoCapture(0)                  # OpenCV, start the camera
+
+def log(datatolog):  # log del servidor
+    file = open("LogCamera.txt", "a")
+    file.write("{0} -- {1}\n".format(datetime.now().strftime("%H:%M %d-%m-%Y"),datatolog))
+    file.close()
+    
 
 @app.route("/")   
 def index():   # creates the webpage where i can see the images
@@ -35,12 +42,11 @@ def detect(framesNum):   # make a call to out class and pass the frames to be we
     total =0
     
     while True:
-        frame = vs.read()   # read the actual frame
+        ret, frame = cap.read()  # read the actual frame using Opencv
+        #frame = vs.read()   # read the actual frame using Flask
         frame = imutils.resize(frame, width=400)   # recize the frame
         gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
         gray = cv2.GaussianBlur(gray,(7,7),0)
-        fecha = datetime.now().strftime("%d-%m-%Y_%I-%M %p")
-        cv2.putText(frame, fecha,(10, frame.shape[0]-10), cv2.FONT_HERSHEY_COMPLEX, 0.35, (0,0,255), 1 )   # set text on the procesed object
         
         if total > framesNum:
             motion = md.compute(gray)
@@ -50,6 +56,7 @@ def detect(framesNum):   # make a call to out class and pass the frames to be we
         
         md.update(gray)
         total += 1    
+        frame = imutils.resize(frame, width=1080)
         
         with lock:    # makes thread safe
             outputFrame = frame.copy()
@@ -58,23 +65,61 @@ def detect(framesNum):   # make a call to out class and pass the frames to be we
 def encode_and_save():
     global outputFrame, lock
     
-    archivo = 'camera_' + datetime.now().strftime("%d-%m-%Y_%I-%M %p") + '.mp4'
-    while True:
+    # create object for saving video file
+    archivo = 'camera_' + datetime.now().strftime("%d-%m-%Y_%I-%M_%p") + '.mp4'
+    #check if the file already exist if not create another one with the ip
+    videocodec = cv2.VideoWriter_fourcc('a','v','c','1')    # H.264 codec works but need to erase or create a new file first
+    salida = cv2.VideoWriter(archivo, videocodec, 32.0,(1920,1080) )  #(int(cap.get(3)), int((cap.get(4)))))
+    camera = cap.isOpened()
+    codec = salida.isOpened()
+    
+    #Check if the camera is open and the codec is working
+    if ((camera == True) & (codec == False)):
+        print('camera working but unable to load video codec for saving video')
+        log('camera working but unable to load video codec for saving video')
+    if ((camera == False) & (codec == False)):
+        print('Unable to load camera and video codec')
+        log('Unable to load camera and video codec')
+    if ((camera == True) & (codec == True)):
+        print('Camera and video codec properly loaded')
+        log('Camera and video codec properly loaded')
+    if ((camera == False) & (codec == True)):
+        print('Camera unable to load, but video codec loaded properly')
+        log('Camera unable to load, but video codec loaded properly')
+
+    if cap.isOpened() == True:    
+        log('Camera Open')
+    if not cap.isOpened():
+        errorMsg = 'Cannot open the camera'
+        yield errorMsg
+        log('Cannot open the camera')
+    
+    while ((cap.isOpened()) & (codec == True)):  # only saves the files if the camera and codec are loaded correctly
         with lock:
             if outputFrame is None:
                 continue
-            #videocodec = cv2.VideoWriter_fourcc('a','v','c','1')    # H.264 codec works but need to erase or create a new file first
-            #salida = cv2.VideoWriter(archivo, videocodec, 24.0, (320, 240) )#(int(cap.get(3)), int((cap.get(4)))))
-            #salida.write(outputFrame)
-            (flag, saveimg) = cv2.imencode(".jpg", outputFrame)
+            width = outputFrame.shape[1]       # retrieve the width of the frame
+            flipFrame = cv2.flip(outputFrame, 1)   #makes sure the frame is fliped
+            fecha = datetime.now().strftime("%d-%m-%Y %I:%M:%S %p")
+            # set the date on the current frame
+            cv2.putText(flipFrame, fecha,(14, flipFrame.shape[0]-10), cv2.FONT_HERSHEY_COMPLEX, 0.35, (0,0,255), 1 )  
+        
+            if width != 1920:       # resizes and write the frame to the video file
+                writeFrame = cv2.resize(flipFrame, (1920,1080), interpolation=cv2.INTER_AREA)
+                salida.write(writeFrame)
+            else:
+                log('frame size dont match, cannot create video file')
+            (flag, saveimg) = cv2.imencode(".jpg", flipFrame)
             if not flag:
                 continue
-        
+        # yield do the actual broadcast of the image
         yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(saveimg) + b'\r\n')
-        
     salida.release()
+    log('video file created succesfully')    
+    
 
     
+
 @app.route("/video_feed")
 def video_feed():
     return Response(encode_and_save(), mimetype='multipart/x-mixed-replace; boundary=frame')
@@ -96,4 +141,6 @@ if __name__ == '__main__':
     #start the app
     app.run(host=arg['ip'], port=arg["port"], debug=True, threaded=True, use_reloader=False)
 #release video pointer
-vs.stop()
+cap.release()
+
+#vs.stop()

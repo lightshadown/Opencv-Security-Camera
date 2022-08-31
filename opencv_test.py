@@ -38,23 +38,23 @@ def camera_works():
     camera = cap.isOpened()
     codec = salida.isOpened()
     if ((camera == True) & (codec == False)):
-        camera = cap.isOpened()
-        codec = salida.isOpened()
+        #camera = cap.isOpened()
+        #codec = salida.isOpened()
         print('camera working but unable to load video codec for saving video')
         log('camera working but unable to load video codec for saving video')
     if ((camera == False) & (codec == False)):
-        camera = cap.isOpened()
-        codec = salida.isOpened()
+        #camera = cap.isOpened()
+        #codec = salida.isOpened()
         print('Unable to load camera and video codec')
         log('Unable to load camera and video codec')
     if ((camera == True) & (codec == True)):
-        camera = cap.isOpened()
-        codec = salida.isOpened()
+        #camera = cap.isOpened()
+        #codec = salida.isOpened()
         print('Camera and video codec properly loaded')
         log('Camera and video codec properly loaded')
     if ((camera == False) & (codec == True)):
-        camera = cap.isOpened()
-        codec = salida.isOpened()
+        #camera = cap.isOpened()
+        #codec = salida.isOpened()
         print('Camera unable to load, but video codec loaded properly')
         log('Camera unable to load, but video codec loaded properly')
 
