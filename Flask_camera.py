@@ -173,7 +173,7 @@ if __name__ == '__main__':
     ap.add_argument("-o", "--port", type=int, required=True, help="port number for this server")
     ap.add_argument("-f", "--frame-count", type=int, default=32, help="number of Frames")
     ap.add_argument("-a", "--auto", type=None, required=False, help="Set default ip and port for device")
-    ap.add_argument("-h", "--help", type=None, required=False, help="Help!!")
+    ap.add_argument("-y", "--ayuda", type=None, required=False, help="Help!!")
     arg = vars(ap.parse_args())
     
     #start thread for motion detection and saving video file    
