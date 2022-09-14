@@ -2,7 +2,9 @@
 # image on webbroser tutorial  https://pyimagesearch.com/2019/09/02/opencv-stream-video-to-web-browser-html-page/
 # use --ip 0.0.0.0 --port 8000 for standart local server
 # in some cases opencv must be compiled from scracht, follow this tutorial 2021 https://www.youtube.com/watch?v=zmdAVkSFYkQ
+# in order to make the broadcast aviable the --ip parameter must be the Rpi ips
 
+from concurrent.futures import thread
 from crypt import methods
 from sys import flags
 import cv2
@@ -17,13 +19,18 @@ from flask import render_template
 import threading
 import imutils
 import argparse
+import socket
 
 #global variables
 outputFrame = None
 lock = threading.Lock()  # thread safe, avoid a thread read a frame thats been use by another thread
 clientNumber = 0        #number of active clients
 
-app = Flask(__name__)  #starts the flask object
+host = socket.gethostname()
+default_host_ip = socket.gethostbyname(host)
+default_port = 7000
+#starts the flask object
+app = Flask(__name__) 
 
 # only one can be active at the same time
 #vs = VideoStream(usePiCamera=1).start()   # Flask, use this one for Rpi camera module, only
@@ -65,10 +72,10 @@ def save():
                     if outputFrame is None:
                         continue
                     width = outputFrame.shape[1]       # retrieve the width of the frame
-                    flipFrame = cv2.flip(outputFrame, 1)   #makes sure the frame is fliped
+                    flipFrame = cv2.flip(outputFrame, -1)   #makes sure the frame is fliped
                     fecha = datetime.now().strftime("%d-%m-%Y %I:%M:%S %p")
                     # set the date on the current frame
-                    cv2.putText(flipFrame, fecha,(14, flipFrame.shape[0]-10), cv2.FONT_HERSHEY_COMPLEX, 0.35, (0,0,255), 1 )  
+                    cv2.putText(flipFrame, fecha,(14, flipFrame.shape[0]-15), cv2.FONT_HERSHEY_COMPLEX, 0.65, (0,0,255), 1 )  
                 
                     if width != 1920:       # resizes and write the frame to the video file
                         writeFrame = cv2.resize(flipFrame, (1920,1080), interpolation=cv2.INTER_AREA)
@@ -129,10 +136,10 @@ def encode(ip):
                     continue
                 
                 #width = outputFrame.shape[1]       # retrieve the width of the frame
-                flipFrame = cv2.flip(outputFrame, 1)   #makes sure the frame is fliped
+                flipFrame = cv2.flip(outputFrame, -1)   #makes sure the frame is fliped
                 fecha = datetime.now().strftime("%d-%m-%Y %I:%M:%S %p")
                 # set the date on the current frame
-                cv2.putText(flipFrame, fecha,(14, flipFrame.shape[0]-10), cv2.FONT_HERSHEY_COMPLEX, 0.35, (0,0,255), 1 )  
+                cv2.putText(flipFrame, fecha,(14, flipFrame.shape[0]-15), cv2.FONT_HERSHEY_COMPLEX, 0.65, (0,0,255), 1 )  
           
                 (flag, saveimg) = cv2.imencode(".jpg", flipFrame)
                 if not flag:
@@ -163,9 +170,10 @@ if __name__ == '__main__':
     # arguments for command line
     ap = argparse.ArgumentParser()
     ap.add_argument("-i", "--ip", type=str, required=True, help="ip of server")
-    #ap.add_argument("")
     ap.add_argument("-o", "--port", type=int, required=True, help="port number for this server")
     ap.add_argument("-f", "--frame-count", type=int, default=32, help="number of Frames")
+    ap.add_argument("-a", "--auto", type=None, required=False, help="Set default ip and port for device")
+    ap.add_argument("-h", "--help", type=None, required=False, help="Help!!")
     arg = vars(ap.parse_args())
     
     #start thread for motion detection and saving video file    
@@ -180,6 +188,7 @@ if __name__ == '__main__':
     #    log('couldnt call save function')
     
     #start the app
+    #app.run(host=default_host_ip, port=default_port, debug=False, threaded=True, use_reloader=False)  # default ip RPi and port
     app.run(host=arg['ip'], port=arg["port"], debug=True, threaded=True, use_reloader=False)
 #release video pointer
 cap.release()
