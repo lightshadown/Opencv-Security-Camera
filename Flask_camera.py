@@ -1,5 +1,7 @@
 # video codecs list https://gist.github.com/takuma7/44f9ecb028ff00e2132e
-# image on webbroser  https://pyimagesearch.com/2019/09/02/opencv-stream-video-to-web-browser-html-page/
+# image on webbroser tutorial  https://pyimagesearch.com/2019/09/02/opencv-stream-video-to-web-browser-html-page/
+# use --ip 0.0.0.0 --port 8000 for standart local server
+# in some cases opencv must be compiled from scracht, follow this tutorial 2021 https://www.youtube.com/watch?v=zmdAVkSFYkQ
 
 from crypt import methods
 from sys import flags
@@ -39,7 +41,8 @@ def save():
         archivo = 'camera_' + datetime.now().strftime("%d-%m-%Y_%I-%M_%p") + '.mp4'
         #check if the file already exist if not create another one with the ip
         #videocodec = cv2.VideoWriter_fourcc('X','V','I','D')    #XVID 
-        videocodec = cv2.VideoWriter_fourcc('a','v','c','1')    # H.264 codec works but need to erase or create a new file first
+        #videocodec = cv2.VideoWriter_fourcc('a','v','c','1')    # H.264 codec works but need to erase or create a new file first
+        videocodec = cv2.VideoWriter_fourcc('m','p','4','v')     # mp4v codec  
         salida = cv2.VideoWriter(archivo, videocodec, 32.0,(1920,1080) )  #(int(cap.get(3)), int((cap.get(4)))))
         camera = cap.isOpened()
         codec = salida.isOpened()
