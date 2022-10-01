@@ -32,6 +32,11 @@ class singleModDetec:
             (x, y, w, h) = cv2.boundingRect(c)
             (minx, miny) = ( min(minx, x), min(miny, y) )
             (maxX, maxY) = ( max(maxX, x+w), max(maxY, y+h) )
-        
-        return (umbral, (minx, miny, maxX, maxY))   # returns a tuple of the treshold image and the coordinates on where was found movement
     
+        #Delete variables to avoid excessive workload on core
+        del delta
+        del umbral
+        del contornos
+        
+        # returns a tuple of the treshold image and the coordinates on where was found movement
+        return (umbral, (minx, miny, maxX, maxY))   
