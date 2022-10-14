@@ -11,11 +11,17 @@ class singleModDetec:
         
     def update(self, image):
         if self.bg is None:
-            self.bg = image.copy().astype("float")  # starts by filling the background with the first frame of the image
+            self.bg = image.copy().astype("float")  # starts by filling the background with a new frame, above 1,0 is white, below is black
             return
-        cv2.accumulateWeighted(image, self.bg, self.peso) # start checkign the diference betwen the background and the new frame
+        cv2.accumulateWeighted(image, self.bg, self.peso) # start checkign the diference betwen the background and the new frame, by doing an accumulated weight of the images
         
-    def compute(self, image, value=25):
+    def compute(self, image, value=25):   # analice the movement
+
+        #percnt = 60  # downscale percent
+        #height = int(image.shape[0] * percnt /100)
+        #width = int(image.shape[1] * percnt / 100)
+        #small_image = cv2.resize(image, (width,height), interpolation=cv2.INTER_AREA )  # downscaled the image to reduce cpu usage
+        
         delta = cv2.absdiff(self.bg.astype("uint8"), image)  # total diference betwen background and frame
         umbral = cv2.threshold(delta, value, 255, cv2.THRESH_BINARY)[1]  # transform to threshold
         umbral = cv2.erode(umbral, None, iterations=2)       # erode and dilate to remove noise and defects on the image
@@ -34,9 +40,9 @@ class singleModDetec:
             (maxX, maxY) = ( max(maxX, x+w), max(maxY, y+h) )
     
         #Delete variables to avoid excessive workload on core
-        del delta
-        del umbral
-        del contornos
+        #del small_image
+        #del delta
+        #del contornos
         
         # returns a tuple of the treshold image and the coordinates on where was found movement
         return (umbral, (minx, miny, maxX, maxY))   
